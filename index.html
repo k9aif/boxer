@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>The Architecture That Endures — K9‑AIF × BMW R18 Boxer</title>
+  <meta name="description" content="What a 1923 BMW boxer engine teaches us about building enterprise agentic AI systems that last. An architectural essay from K9X.ai.">
+  <meta name="author" content="Ravi Natarajan">
+
+  <meta property="og:title" content="The Architecture That Endures — K9‑AIF × BMW R18 Boxer">
+  <meta property="og:description" content="Models will change. Providers will change. The architecture shouldn't have to.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://boxer.k9x.ai">
+  <meta property="og:image" content="https://boxer.k9x.ai/images/bmw-boxer-engine.jpeg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* Paper / journal palette */
+      --bg:         #f7f4ef;
+      --bg-card:    #ffffff;
+      --bg-tint:    #f0ece4;
+      --border:     #ddd8cf;
+      --border-l:   #e8e3da;
+
+      /* Typography */
+      --ink:        #1a1a1a;
+      --ink-2:      #3a3a3a;
+      --ink-3:      #666056;
+      --muted:      #9a9288;
+
+      /* Accents */
+      --blue:       #1C69D4;   /* BMW blue — used sparingly */
+      --blue-bg:    rgba(28, 105, 212, 0.06);
+      --gold:       #7a5c1e;   /* muted heritage gold — BMW / mechanical */
+      --gold-bg:    rgba(122, 92, 30, 0.07);
+
+      /* Code */
+      --code-fg:    #1C69D4;
+      --code-bg:    rgba(28, 105, 212, 0.06);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink-2);
+      font-family: 'Inter', Arial, system-ui, sans-serif;
+      font-weight: 400;
+      font-size: 15px;
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Nav — K9X dark nav (ecosystem brand, unchanged) ──────────────── */
+    .site-nav {
+      background: #0f1720;
+      border-bottom: 1px solid rgba(0, 230, 255, 0.08);
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      flex-wrap: wrap;
+    }
+    .nav-brand {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #e8edf0;
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      padding: 14px 0;
+    }
+    .nav-brand span { color: #00E6FF; }
+    .nav-links { display: flex; }
+    .nav-links a {
+      display: inline-block;
+      padding: 13px 22px;
+      color: #6f8a96;
+      text-decoration: none;
+      font-size: 0.88rem;
+      border-left: 1px solid rgba(0,230,255,0.08);
+      transition: color 0.2s, background 0.2s;
+    }
+    .nav-links a:last-child { border-right: 1px solid rgba(0,230,255,0.08); }
+    .nav-links a:hover { color: #00E6FF; background: rgba(0,230,255,0.05); }
+
+    /* ── Page wrapper ──────────────────────────────────────────────────── */
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+
+    /* ── Article header ────────────────────────────────────────────────── */
+    .article-header {
+      max-width: 760px;
+      padding: 64px 0 48px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 48px;
+    }
+
+    .article-kicker {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: clamp(1.75rem, 4vw, 2.6rem);
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+
+    .article-deck {
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--ink-3);
+      line-height: 1.65;
+      max-width: 620px;
+      margin-bottom: 28px;
+    }
+
+    .article-meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .article-meta span { color: var(--border); margin: 0 8px; }
+
+    /* ── Layout: article column + sidebar ─────────────────────────────── */
+    .article-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 64px;
+      align-items: start;
+      padding: 0 0 80px;
+    }
+
+    /* ── Body text ─────────────────────────────────────────────────────── */
+    .article-text p {
+      margin-bottom: 20px;
+      color: var(--ink-2);
+      line-height: 1.8;
+    }
+
+    .article-text p strong { color: var(--ink); font-weight: 600; }
+
+    .article-text h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin: 40px 0 14px;
+      padding-top: 40px;
+      border-top: 1px solid var(--border-l);
+      letter-spacing: 0.01em;
+    }
+
+    blockquote {
+      border-left: 2px solid var(--gold);
+      padding: 2px 0 2px 20px;
+      margin: 28px 0;
+      color: var(--ink-3);
+      font-style: italic;
+      font-size: 0.93rem;
+      background: var(--gold-bg);
+    }
+    blockquote cite {
+      display: block;
+      margin-top: 8px;
+      font-style: normal;
+      font-size: 0.73rem;
+      color: var(--muted);
+    }
+
+    code {
+      font-family: 'Courier New', monospace;
+      font-size: 0.83em;
+      color: var(--code-fg);
+      background: var(--code-bg);
+      padding: 1px 5px;
+      border-radius: 2px;
+    }
+
+    /* ── Sidebar ───────────────────────────────────────────────────────── */
+    .article-sidebar { position: sticky; top: 24px; }
+
+    .sidebar-img {
+      width: 100%;
+      display: block;
+      border: 1px solid var(--border);
+      filter: brightness(0.95) contrast(1.02) saturate(0.88);
+      margin-bottom: 8px;
+    }
+
+    .sidebar-caption {
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .sidebar-specs {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .sidebar-specs-title {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 14px;
+    }
+
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border-l);
+      gap: 12px;
+    }
+    .spec-row:last-child { border-bottom: none; }
+    .spec-k { color: var(--muted); flex-shrink: 0; }
+    .spec-v { color: var(--ink); text-align: right; font-weight: 500; }
+
+    .sidebar-links { background: var(--bg-card); border: 1px solid var(--border); padding: 20px; }
+    .sidebar-links-title {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .sidebar-links a {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--ink-3);
+      text-decoration: none;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border-l);
+      transition: color 0.2s;
+    }
+    .sidebar-links a:last-child { border-bottom: none; }
+    .sidebar-links a:hover { color: var(--blue); }
+    .sidebar-links a::after { content: ' →'; opacity: 0.35; }
+
+    /* ── Full-width image break ────────────────────────────────────────── */
+    .image-break {
+      margin: 48px 0;
+      border-top: 1px solid var(--border-l);
+      border-bottom: 1px solid var(--border-l);
+    }
+    .image-break img {
+      width: 100%;
+      display: block;
+      max-height: 400px;
+      object-fit: cover;
+      object-position: center 38%;
+      filter: brightness(0.92) contrast(1.02) saturate(0.82);
+    }
+    .image-break-caption {
+      padding: 10px 0;
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ── Mapping table ─────────────────────────────────────────────────── */
+    .mapping-section {
+      padding: 64px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 10px;
+    }
+
+    .section-heading {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 32px;
+      letter-spacing: -0.01em;
+    }
+
+    .mapping-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+    }
+
+    .mapping-table thead tr {
+      background: var(--bg-tint);
+      border-bottom: 1px solid var(--border);
+    }
+    .mapping-table th {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 12px 16px;
+      text-align: left;
+      color: var(--muted);
+    }
+    .mapping-table th:first-child { color: var(--gold); border-right: 1px solid var(--border-l); }
+    .mapping-table th:last-child  { color: var(--blue); }
+    .mapping-table th.arrow-col   { width: 32px; text-align: center; color: var(--border); }
+
+    .mapping-table tbody tr {
+      border-bottom: 1px solid var(--border-l);
+      transition: background 0.15s;
+    }
+    .mapping-table tbody tr:last-child { border-bottom: none; }
+    .mapping-table tbody tr:hover { background: var(--blue-bg); }
+
+    .mapping-table td {
+      padding: 18px 16px;
+      vertical-align: top;
+    }
+    .mapping-table td:first-child { border-right: 1px solid var(--border-l); }
+    .mapping-table td.arrow-col {
+      color: var(--muted);
+      text-align: center;
+      padding: 18px 8px;
+      font-size: 0.78rem;
+    }
+
+    .eng-name { font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+    .eng-note { font-size: 0.78rem; color: var(--muted); font-style: italic; }
+
+    .k9-name { font-family: 'Courier New', monospace; color: var(--code-fg); margin-bottom: 3px; font-size: 0.85rem; font-weight: 600; }
+    .k9-note { font-size: 0.78rem; color: var(--ink-3); }
+
+    /* ── Two-column list ───────────────────────────────────────────────── */
+    .two-col-section {
+      padding: 64px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .two-col-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 28px;
+    }
+
+    .panel-head {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding-bottom: 14px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border-l);
+    }
+    .panel--change  .panel-head { color: var(--muted); }
+    .panel--endures .panel-head { color: var(--blue); }
+
+    .panel-list { list-style: none; }
+    .panel-list li {
+      font-size: 0.85rem;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-l);
+      color: var(--ink-2);
+      display: flex;
+      gap: 10px;
+    }
+    .panel-list li:last-child { border-bottom: none; }
+    .panel--change  .panel-list li::before { content: '–'; color: var(--muted); flex-shrink: 0; }
+    .panel--endures .panel-list li::before { content: '✓'; color: var(--blue); flex-shrink: 0; font-size: 0.75rem; margin-top: 2px; }
+
+    /* ── Closing paragraph ─────────────────────────────────────────────── */
+    .article-close {
+      max-width: 760px;
+      padding: 64px 0 80px;
+      border-top: 1px solid var(--border);
+    }
+    .article-close p {
+      color: var(--ink-2);
+      margin-bottom: 18px;
+      line-height: 1.8;
+    }
+    .article-close p strong { color: var(--ink); }
+    .article-close .closing-line {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-l);
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.9;
+    }
+    .article-close .hashtags {
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .article-close .hashtags a {
+      color: var(--muted);
+      text-decoration: none;
+      margin-right: 10px;
+      transition: color 0.2s;
+    }
+    .article-close .hashtags a:hover { color: var(--blue); }
+
+    /* ── Footer — K9X dark footer (matches nav) ────────────────────────── */
+    footer {
+      background: #0f1720;
+      border-top: 1px solid rgba(0,230,255,0.08);
+      padding: 40px 32px;
+    }
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .footer-brand { font-weight: 700; color: #e8edf0; font-size: 0.95rem; }
+    .footer-brand span { color: #00E6FF; }
+    .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+    .footer-links a {
+      font-size: 0.82rem;
+      color: #6f8a96;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: #00E6FF; }
+    .footer-copy {
+      max-width: 1100px;
+      margin: 20px auto 0;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0,230,255,0.08);
+      font-size: 0.72rem;
+      color: #4d6270;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* ── Responsive ────────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .article-layout { grid-template-columns: 1fr; }
+      .article-sidebar { position: static; }
+      .two-col-grid   { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .page, footer { padding-left: 20px; padding-right: 20px; }
+      .nav-inner    { padding: 0 16px; }
+      .nav-links a  { padding: 12px 14px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── NAV ──────────────────────────────────────────────────────────── -->
+  <nav class="site-nav">
+    <div class="nav-inner">
+      <a href="https://k9x.ai" class="nav-brand">K9X<span>.</span>ai</a>
+      <div class="nav-links">
+        <a href="https://k9x.ai">Home</a>
+        <a href="https://blog.k9x.ai">Blog</a>
+        <a href="https://pydocs.k9x.ai/starthere/">Docs</a>
+        <a href="https://studio.k9x.ai">Studio</a>
+        <a href="https://graph.k9x.ai">Graph</a>
+        <a href="https://github.com/k9aif/k9-aif-framework" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page">
+
+    <!-- ── ARTICLE HEADER ─────────────────────────────────────────────── -->
+    <header class="article-header">
+      <p class="article-kicker">Architectural Essay · K9X.ai</p>
+      <h1>The Architecture That Endures</h1>
+      <p class="article-deck">
+        What a 1923 BMW boxer engine reveals about building enterprise agentic AI systems
+        that outlast the technology cycle — and why it matters for K9‑AIF.
+      </p>
+      <div class="article-meta">
+        Ravi Natarajan <span>·</span> K9X.ai <span>·</span> 2025
+      </div>
+    </header>
+
+    <!-- ── ARTICLE BODY + SIDEBAR ──────────────────────────────────────── -->
+    <div class="article-layout">
+
+      <article class="article-text">
+
+        <p>
+          One reason I keep returning to traditional software architecture principles is
+          because <strong>good architecture tends to endure.</strong>
+        </p>
+
+        <p>
+          A great example is the BMW boxer engine. The core architecture has remained
+          recognizable since 1923. Materials changed. Electronics changed. Manufacturing
+          changed. Performance changed dramatically. But the underlying design principles —
+          the horizontally opposed flat-twin, the exposed drivetrain, the pushrod geometry —
+          stayed consistent for more than a century.
+        </p>
+
+        <p>
+          I increasingly think enterprise agentic systems will evolve the same way. Not
+          because the technology will stay the same — it won't. But because the architectural
+          principles underneath them are older than the technology and will outlast it.
+        </p>
+
+        <h2>The engine as architectural argument</h2>
+
+        <p>
+          The BMW R18's 1,802cc Big Boxer is the largest boxer engine BMW has ever built.
+          Its pushrod tubes sit on top of the cylinders — a nod to 1930s aesthetics — and its
+          nickel-plated Cardan driveshaft is left entirely open to view. None of that is
+          accidental.
+        </p>
+
+        <blockquote>
+          "The engine's raw, mechanical construction is entirely exposed. The polished intakes
+          and dual-throttle body setup give it an analog, handcrafted feel in a digital age."
+          <cite>— BMW R18 design brief</cite>
+        </blockquote>
+
+        <p>
+          BMW chose to expose the mechanics because <strong>the architecture is the design.</strong>
+          The engine is not hidden. The drivetrain is not wrapped in fairings. Every contract
+          between components is visible.
+        </p>
+
+        <p>
+          That's a precise description of what K9‑AIF tries to do for agentic systems.
+        </p>
+
+        <div class="image-break">
+          <img src="images/big-boxer-exploded.webp"
+               alt="BMW R18 Big Boxer — exploded view showing all mechanical components">
+          <p class="image-break-caption">
+            BMW R18 exploded view — every component in its architectural relationship
+          </p>
+        </div>
+
+        <h2>The exploded view</h2>
+
+        <p>
+          An exploded view doesn't show you a working engine. It shows you the architecture:
+          where each component sits relative to the others, what connects to what, what the
+          interfaces are.
+        </p>
+
+        <p>
+          K9‑AIF is built with the same intent. The ABB/SBB separation is the exploded view
+          of an agentic system. <code>BaseAgent</code>, <code>BaseSquad</code>,
+          <code>K9EventRouter</code>, <code>BaseModelRouter</code> — every contract sits in
+          its architectural position, exposed and inspectable. Nothing is hidden inside a
+          framework abstraction you can't read.
+        </p>
+
+        <p>
+          Solutions plug into these interfaces. The interfaces outlast the solutions.
+        </p>
+
+        <h2>What this means in practice</h2>
+
+        <p>
+          The BMW R18 doesn't pretend the last 100 years didn't happen. It has fuel injection,
+          ride-by-wire throttle, traction control, and CAN-bus electronics. Every material is
+          better. Every tolerance is tighter. But you can still see where the pushrod tubes
+          are, how the driveshaft routes, and where each major component sits — because the
+          architecture predates all of it and will outlast whatever comes next.
+        </p>
+
+        <p>
+          That's the ambition for K9‑AIF. Not to freeze the technology stack. To make the
+          architecture durable enough that replacing the technology stack is a configuration
+          decision, not a rewrite.
+        </p>
+
+        <p>
+          Models will change. Inference providers will change. Tooling will change.
+          Runtime infrastructure will change. Architectural fundamentals — modularity,
+          contracts, orchestration boundaries, design patterns, governance, observability,
+          layered system design — will remain essential for a long time.
+        </p>
+
+      </article>
+
+      <!-- ── SIDEBAR ──────────────────────────────────────────────────── -->
+      <aside class="article-sidebar">
+
+        <img src="images/bmw-boxer-engine.jpeg"
+             class="sidebar-img"
+             alt="BMW R18 Big Boxer engine — 1,802cc air/oil-cooled flat-twin">
+        <p class="sidebar-caption">BMW R18 · 1,802cc Big Boxer</p>
+
+        <div class="sidebar-specs">
+          <p class="sidebar-specs-title">Engine Specifications</p>
+          <div class="spec-row">
+            <span class="spec-k">Displacement</span>
+            <span class="spec-v">1,802 cc</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-k">Bore × Stroke</span>
+            <span class="spec-v">107.1 × 100 mm</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-k">Configuration</span>
+            <span class="spec-v">Air/oil flat-twin</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-k">Induction</span>
+            <span class="spec-v">Dual throttle body</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-k">Drivetrain</span>
+            <span class="spec-v">Open Cardan shaft</span>
+          </div>
+          <div class="spec-row">
+            <span class="spec-k">Architecture since</span>
+            <span class="spec-v">1923</span>
+          </div>
+        </div>
+
+        <div class="sidebar-links">
+          <p class="sidebar-links-title">K9‑AIF Framework</p>
+          <a href="https://pydocs.k9x.ai/starthere/">Documentation</a>
+          <a href="https://github.com/k9aif/k9-aif-framework">GitHub</a>
+          <a href="https://studio.k9x.ai">K9X Studio</a>
+          <a href="https://graph.k9x.ai">Graph Explorer</a>
+          <a href="https://blog.k9x.ai">Blog</a>
+        </div>
+
+      </aside>
+
+    </div>
+
+    <!-- ── MAPPING TABLE ────────────────────────────────────────────────── -->
+    <section class="mapping-section">
+      <p class="section-label">Architectural Mapping</p>
+      <h2 class="section-heading">BMW R18 Boxer → K9‑AIF Framework</h2>
+
+      <table class="mapping-table">
+        <thead>
+          <tr>
+            <th>Engine Element</th>
+            <th class="arrow-col"></th>
+            <th>K9‑AIF Equivalent</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="eng-name">1,802cc Core Displacement</div>
+              <div class="eng-note">Largest boxer BMW ever built — the foundation everything radiates from</div>
+            </td>
+            <td class="arrow-col">→</td>
+            <td>
+              <div class="k9-name">BaseAgent + llm_invoke</div>
+              <div class="k9-note">The fundamental contract every agent extends. Every LLM call flows through <code>llm_invoke</code>. Nothing bypasses the core.</div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="eng-name">Open Cardan Driveshaft</div>
+              <div class="eng-note">Nickel-plated, fully visible — the spine that transfers power across the machine</div>
+            </td>
+            <td class="arrow-col">→</td>
+            <td>
+              <div class="k9-name">K9EventRouter</div>
+              <div class="k9-note">The visible spine of the system. Events route deterministically from source to orchestrator in plain sight. Inspectable and traceable.</div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="eng-name">Exposed Pushrod Tubes</div>
+              <div class="eng-note">Heritage mechanism, deliberately unconcealed — inspect the mechanism; trust what you see</div>
+            </td>
+            <td class="arrow-col">→</td>
+            <td>
+              <div class="k9-name">ABB Contracts</div>
+              <div class="k9-note">Explicit, unconcealed interfaces. <code>execute()</code>, <code>route()</code>, <code>run()</code> — every contract is readable. No hidden coupling in the framework.</div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="eng-name">Dual Throttle Bodies</div>
+              <div class="eng-note">Multi-point, precisely weighted delivery — the right mixture at the right moment</div>
+            </td>
+            <td class="arrow-col">→</td>
+            <td>
+              <div class="k9-name">K9ModelRouter + Provider Adapters</div>
+              <div class="k9-note">Weighted model scoring across task type, sensitivity, latency, cost. Swap providers without touching agent code.</div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="eng-name">Air/Oil Cooling</div>
+              <div class="eng-note">Passive, always-on thermal regulation — keeps tolerances without interrupting the ride</div>
+            </td>
+            <td class="arrow-col">→</td>
+            <td>
+              <div class="k9-name">Governance + Observability</div>
+              <div class="k9-note">Passive, always-on oversight. Every agent call goes through governance hooks. Every routing decision is persisted. Invisible until you need it.</div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="eng-name">107.1mm Bore × 100mm Stroke</div>
+              <div class="eng-note">Irreducible geometry — the fundamental ratio from which everything else flows</div>
+            </td>
+            <td class="arrow-col">→</td>
+            <td>
+              <div class="k9-name">ABB × SBB</div>
+              <div class="k9-note">Contract × Implementation. The geometry that makes solutions portable, testable, and replaceable across any infrastructure change.</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ── WHAT CHANGES / WHAT ENDURES ─────────────────────────────────── -->
+    <section class="two-col-section">
+      <p class="section-label">The Core Argument</p>
+      <h2 class="section-heading">Technologies shift. Architecture shouldn't have to.</h2>
+
+      <div class="two-col-grid">
+        <div class="two-col-panel panel--change">
+          <div class="panel-head">What Will Change</div>
+          <ul class="panel-list">
+            <li>Models — GPT-4 to GPT-5 to whatever is next</li>
+            <li>Inference providers — new clouds, new endpoints, new pricing</li>
+            <li>Tooling — MCP, A2A, new SDKs every quarter</li>
+            <li>Runtime infrastructure — Kafka, NATS, Pulsar</li>
+            <li>Vector databases — pinecone, chroma, weaviate, pgvector</li>
+            <li>Prompt techniques — RAG, CoT, ReAct and what follows</li>
+            <li>Hardware — GPUs, TPUs, NPUs, new silicon every 18 months</li>
+          </ul>
+        </div>
+        <div class="two-col-panel panel--endures">
+          <div class="panel-head">What Endures</div>
+          <ul class="panel-list">
+            <li>Modularity — honest boundaries between components</li>
+            <li>Contracts — explicit interfaces SBBs implement without modifying the core</li>
+            <li>Orchestration boundaries — who coordinates, who executes, who routes</li>
+            <li>Design patterns — Factory, Adapter, Strategy, Observer</li>
+            <li>Governance — oversight baked in, not bolted on</li>
+            <li>Observability — every decision traceable, every route inspectable</li>
+            <li>Layered system design — separation of concerns across the hierarchy</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CLOSING ──────────────────────────────────────────────────────── -->
+    <section class="article-close">
+      <p>
+        That's one of the ideas behind <strong>K9‑AIF</strong>: a stable architectural
+        core that can absorb decades of change in the AI ecosystem without losing
+        coherence — the same way the BMW boxer engine architecture has endured for
+        generations.
+      </p>
+      <p>
+        The technologies will shift. The architecture shouldn't have to.
+      </p>
+      <div class="closing-line">
+        <div class="hashtags">
+          <a href="#">#AgenticAI</a>
+          <a href="#">#EnterpriseArchitecture</a>
+          <a href="#">#K9AIF</a>
+          <a href="#">#SoftwareDesign</a>
+          <a href="#">#LLM</a>
+          <a href="#">#ArchitecturePrinciples</a>
+          <a href="#">#BMW</a>
+          <a href="#">#BMWBoxerEngine</a>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /page -->
+
+  <!-- ── FOOTER ───────────────────────────────────────────────────────── -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">K9X<span>.</span>ai</div>
+      <div class="footer-links">
+        <a href="https://k9x.ai">k9x.ai</a>
+        <a href="https://blog.k9x.ai">Blog</a>
+        <a href="https://pydocs.k9x.ai/starthere/">Docs</a>
+        <a href="https://studio.k9x.ai">Studio</a>
+        <a href="https://graph.k9x.ai">Graph Explorer</a>
+        <a href="https://github.com/k9aif/k9-aif-framework" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+    <div class="footer-copy">
+      <span>© 2025 K9X.ai · Ravi Natarajan</span>
+      <span>BMW R18 imagery used for editorial reference only.</span>
+    </div>
+  </footer>
+
+</body>
+</html>
