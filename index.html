@@ -475,11 +475,45 @@
       gap: 8px;
     }
 
+    /* ── Side-by-side image comparison ────────────────────────────────── */
+    .side-by-side {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .side-by-side-photo img {
+      width: 100%;
+      display: block;
+      height: 260px;
+      object-fit: cover;
+      object-position: center;
+      border: 1px solid var(--border);
+      filter: brightness(0.92) contrast(1.02) saturate(0.82);
+    }
+    .side-by-side-diagram img {
+      width: 100%;
+      display: block;
+      height: 260px;
+      object-fit: contain;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 12px;
+    }
+    .side-by-side-caption {
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 8px 0 0;
+    }
+
     /* ── Responsive ────────────────────────────────────────────────────── */
     @media (max-width: 900px) {
       .article-layout { grid-template-columns: 1fr; }
       .article-sidebar { position: static; }
       .two-col-grid   { grid-template-columns: 1fr; }
+      .side-by-side   { grid-template-columns: 1fr; }
     }
     @media (max-width: 600px) {
       .page, footer { padding-left: 20px; padding-right: 20px; }
@@ -648,6 +682,23 @@
         </p>
 
         <p>
+          The boxer design didn't survive a century because it looked elegant. It survived
+          because it solved a hard engineering constraint — packaging a twin-cylinder engine
+          in a motorcycle while keeping the center of gravity low and cooling entirely passive.
+          The elegance was the outcome of good engineering under real constraints, not the
+          starting point.
+        </p>
+
+        <p>
+          K9‑AIF's layered architecture emerged the same way. LLM behavior is
+          non-deterministic, but enterprise governance requirements are not. The ABB/SBB
+          separation wasn't a design preference — it was the only structure that could absorb
+          continuous model churn, provider changes, and tooling shifts without forcing rewrites
+          of governance, routing, and audit logic on every cycle. The clean structure is the
+          result of respecting real constraints.
+        </p>
+
+        <p>
           That's the ambition for K9‑AIF. Not to freeze the technology stack. To make the
           architecture durable enough that replacing the technology stack is a configuration
           decision, not a rewrite.
@@ -715,6 +766,19 @@
     <section class="mapping-section">
       <p class="section-label">Architectural Mapping</p>
       <h2 class="section-heading">BMW R18 Boxer → K9‑AIF Framework</h2>
+
+      <div class="side-by-side">
+        <div class="side-by-side-panel side-by-side-photo">
+          <img src="images/bmw-boxer-engine.jpeg"
+               alt="BMW R18 Big Boxer engine — 1,802cc air/oil-cooled flat-twin">
+          <p class="side-by-side-caption">BMW R18 · 1,802cc Big Boxer · 1923 architecture</p>
+        </div>
+        <div class="side-by-side-panel side-by-side-diagram">
+          <img src="images/k9-aif-architecture.png"
+               alt="K9-AIF Architecture — ABB/SBB layered design">
+          <p class="side-by-side-caption">K9-AIF · ABB/SBB layered architecture</p>
+        </div>
+      </div>
 
       <table class="mapping-table">
         <thead>
